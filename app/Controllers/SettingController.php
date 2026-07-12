@@ -147,6 +147,8 @@ class SettingController {
             $heroSubtitle = $request->post('landing_hero_subtitle');
             $contactEmail = $request->post('contact_email');
             $contactPhone = $request->post('contact_phone');
+            $matricFormat = $request->post('matric_format');
+            $levelOptions = $request->post('level_options');
 
             // Handle custom logo file upload if provided
             $logoPath = null;
@@ -197,6 +199,14 @@ class SettingController {
                 $stmt7 = $db->getConnection()->prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('contact_phone', :cp)");
                 $stmt7->bindValue(':cp', $contactPhone);
                 $stmt7->execute();
+
+                $stmt9 = $db->getConnection()->prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('matric_format', :mf)");
+                $stmt9->bindValue(':mf', $matricFormat);
+                $stmt9->execute();
+
+                $stmt10 = $db->getConnection()->prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('level_options', :lo)");
+                $stmt10->bindValue(':lo', $levelOptions);
+                $stmt10->execute();
 
                 if ($logoPath !== null) {
                     $stmt8 = $db->getConnection()->prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('logo_path', :lp)");

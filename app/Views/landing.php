@@ -290,7 +290,6 @@ use App\Core\Session;
         <div class="flex justify-center space-x-6">
             <a href="/siwes/" class="hover:text-accent">Home</a>
             <a href="#specialized-fields" class="hover:text-accent">Specializations</a>
-            <a href="#how-it-works" class="hover:text-accent">Features</a>
             <a href="#faq" class="hover:text-accent">FAQ</a>
         </div>
         <div class="text-slate-400 text-xs mt-2 space-y-1">

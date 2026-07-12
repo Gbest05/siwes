@@ -240,10 +240,30 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1 font-poppins text-accent">Year of Study</label>
+                        <?php
+                        if (!isset($settings)) {
+                            $db = \App\Core\Database::getInstance();
+                            $settingsRaw = $db->fetchAll("SELECT * FROM settings");
+                            $settings = [];
+                            foreach ($settingsRaw as $s) {
+                                $settings[$s['key']] = $s['value'];
+                            }
+                        }
+                        $levelRaw = $settings['level_options'] ?? '3:3rd Year,4:4th Year,5:5th Year';
+                        $levelOptions = [];
+                        foreach (explode(',', $levelRaw) as $item) {
+                            $parts = explode(':', $item);
+                            if (count($parts) === 2) {
+                                $levelOptions[(int)trim($parts[0])] = trim($parts[1]);
+                            } else {
+                                $levelOptions[count($levelOptions) + 3] = trim($item);
+                            }
+                        }
+                        ?>
                         <select name="year_of_study" :value="editForm.year_of_study" @change="editForm.year_of_study = $event.target.value" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none dark:text-white" required>
-                            <option value="3">3rd Year</option>
-                            <option value="4">4th Year</option>
-                            <option value="5">5th Year</option>
+                            <?php foreach ($levelOptions as $val => $lbl): ?>
+                                <option value="<?= $val ?>"><?= htmlspecialchars($lbl) ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
                 </div>

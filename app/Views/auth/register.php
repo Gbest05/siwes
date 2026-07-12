@@ -55,11 +55,31 @@
         </div>
 
         <!-- Student fields -->
+        <?php
+        if (!isset($settings)) {
+            $db = \App\Core\Database::getInstance();
+            $settingsRaw = $db->fetchAll("SELECT * FROM settings");
+            $settings = [];
+            foreach ($settingsRaw as $s) {
+                $settings[$s['key']] = $s['value'];
+            }
+        }
+        $levelRaw = $settings['level_options'] ?? '3:3rd Year,4:4th Year,5:5th Year';
+        $levelOptions = [];
+        foreach (explode(',', $levelRaw) as $item) {
+            $parts = explode(':', $item);
+            if (count($parts) === 2) {
+                $levelOptions[(int)trim($parts[0])] = trim($parts[1]);
+            } else {
+                $levelOptions[count($levelOptions) + 3] = trim($item);
+            }
+        }
+        ?>
         <div x-show="role === 'student'" x-transition class="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Matric Number</label>
-                    <input type="text" name="matric_no" ::required="role === 'student'" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none dark:text-white" placeholder="CSC/2021/045">
+                    <input type="text" name="matric_no" ::required="role === 'student'" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none dark:text-white" placeholder="<?= htmlspecialchars($settings['matric_format'] ?? 'CSC/2021/045') ?>">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Department</label>
@@ -78,9 +98,9 @@
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Year of Study</label>
                     <select name="year_of_study" ::required="role === 'student'" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none dark:text-white">
-                        <option value="3">3rd Year</option>
-                        <option value="4" selected>4th Year</option>
-                        <option value="5">5th Year</option>
+                        <?php foreach ($levelOptions as $val => $lbl): ?>
+                            <option value="<?= $val ?>"><?= htmlspecialchars($lbl) ?></option>
+                        <?php endforeach; ?>
                     </select>
                 </div>
             </div>

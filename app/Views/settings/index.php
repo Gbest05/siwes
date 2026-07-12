@@ -219,6 +219,17 @@ $role = Auth::getRole();
                             </div>
                         </div>
 
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Matric Number Format Helper</label>
+                                <input type="text" name="matric_format" value="<?= htmlspecialchars($settings['matric_format'] ?? 'CSC/2021/045') ?>" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none dark:text-white" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Level Option List (format: value:label,value:label)</label>
+                                <input type="text" name="level_options" value="<?= htmlspecialchars($settings['level_options'] ?? '3:3rd Year,4:4th Year,5:5th Year') ?>" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none dark:text-white" required>
+                            </div>
+                        </div>
+
                         <button type="submit" class="bg-primary hover:bg-secondary text-white text-xs px-6 py-2.5 rounded-xl font-bold transition">Save Configs</button>
                     </form>
 

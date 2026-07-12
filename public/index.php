@@ -81,8 +81,16 @@ $router->get('/coordinator/students', [\App\Controllers\StudentController::class
 $router->post('/coordinator/student/deactivate', [\App\Controllers\StudentController::class, 'deactivate']);
 $router->post('/coordinator/student/import', [\App\Controllers\StudentController::class, 'importCsv']);
 $router->post('/coordinator/student/update', [\App\Controllers\StudentController::class, 'update']);
+$router->get('/coordinator/users', [\App\Controllers\UserController::class, 'index']);
+$router->post('/coordinator/user/suspend', [\App\Controllers\UserController::class, 'suspend']);
+$router->post('/coordinator/user/delete', [\App\Controllers\UserController::class, 'delete']);
 $router->get('/coordinator/companies', [\App\Controllers\CompanyController::class, 'index']);
 $router->post('/coordinator/company/verify', [\App\Controllers\CompanyController::class, 'verify']);
+$router->post('/coordinator/company/delete', [\App\Controllers\CompanyController::class, 'delete']);
+$router->get('/coordinator/departments', [\App\Controllers\DepartmentController::class, 'index']);
+$router->post('/coordinator/department/add', [\App\Controllers\DepartmentController::class, 'add']);
+$router->post('/coordinator/department/update', [\App\Controllers\DepartmentController::class, 'update']);
+$router->post('/coordinator/department/delete', [\App\Controllers\DepartmentController::class, 'delete']);
 
 // Documents Uploads
 $router->post('/student/upload-doc', [\App\Controllers\StudentController::class, 'uploadDoc']);

@@ -111,6 +111,12 @@ $linkClass = function($path) use ($isActive) {
                         <a href="/siwes/admin/dashboard" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm transition-all <?= $linkClass('/admin/dashboard') ?>">
                             <i class="fa-solid fa-chart-line text-lg w-5"></i> <span>Dashboard</span>
                         </a>
+                        <a href="/siwes/coordinator/users" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm transition-all <?= $linkClass('/coordinator/users') ?>">
+                            <i class="fa-solid fa-user-shield text-lg w-5"></i> <span>Manage Users</span>
+                        </a>
+                        <a href="/siwes/coordinator/departments" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm transition-all <?= $linkClass('/coordinator/departments') ?>">
+                            <i class="fa-solid fa-graduation-cap text-lg w-5"></i> <span>Manage Departments</span>
+                        </a>
                         <a href="/siwes/coordinator/allocations" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm transition-all <?= $linkClass('/coordinator/allocations') ?>">
                             <i class="fa-solid fa-shuffle text-lg w-5"></i> <span>SIWES Allocations</span>
                         </a>
@@ -128,6 +134,12 @@ $linkClass = function($path) use ($isActive) {
                     <?php if ($role === 'coordinator'): ?>
                         <a href="/siwes/coordinator/dashboard" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm transition-all <?= $linkClass('/coordinator/dashboard') ?>">
                             <i class="fa-solid fa-chart-line text-lg w-5"></i> <span>Dashboard</span>
+                        </a>
+                        <a href="/siwes/coordinator/users" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm transition-all <?= $linkClass('/coordinator/users') ?>">
+                            <i class="fa-solid fa-user-shield text-lg w-5"></i> <span>User Management</span>
+                        </a>
+                        <a href="/siwes/coordinator/departments" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm transition-all <?= $linkClass('/coordinator/departments') ?>">
+                            <i class="fa-solid fa-graduation-cap text-lg w-5"></i> <span>Departments</span>
                         </a>
                         <a href="/siwes/coordinator/allocations" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm transition-all <?= $linkClass('/coordinator/allocations') ?>">
                             <i class="fa-solid fa-shuffle text-lg w-5"></i> <span>SIWES Allocations</span>

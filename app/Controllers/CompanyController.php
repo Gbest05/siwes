@@ -85,13 +85,45 @@ class CompanyController {
         // Send notifications to supervisors linked to this company
         $supervisors = $db->fetchAll("SELECT user_id FROM supervisors WHERE company_id = :cid", [':cid' => $cid]);
         foreach ($supervisors as $s) {
-            $stmtNotif = $db->prepare("INSERT INTO notifications (user_id, title, message, type) VALUES (:uid, 'Company Verification Updated', :msg, 'info')");
+            $stmtNotif = $db->getConnection()->prepare("INSERT INTO notifications (user_id, title, message, type) VALUES (:uid, 'Company Verification Updated', :msg, 'info')");
             $stmtNotif->bindValue(':uid', $s['user_id']);
             $stmtNotif->bindValue(':msg', "Your linked company account verification status has been changed to: $status.");
             $stmtNotif->execute();
         }
 
         Session::setFlash('success', "Company status updated to $status successfully.");
+        return $response->redirect('/coordinator/companies');
+    }
+
+    public function delete() {
+        Auth::requireRole(['admin', 'coordinator']);
+        $request = new Request();
+        $response = new Response();
+        $db = Database::getInstance();
+
+        if (!$request->isPost()) {
+            return $response->redirect('/coordinator/companies');
+        }
+
+        $cid = $request->post('company_id');
+        if (empty($cid)) {
+            Session::setFlash('error', 'Company ID is required.');
+            return $response->redirect('/coordinator/companies');
+        }
+
+        $db->getConnection()->exec("BEGIN TRANSACTION;");
+        try {
+            $stmt = $db->getConnection()->prepare("DELETE FROM companies WHERE id = :cid");
+            $stmt->bindValue(':cid', $cid);
+            $stmt->execute();
+
+            $db->getConnection()->exec("COMMIT;");
+            Session::setFlash('success', 'Company permanently deleted.');
+        } catch (\Exception $e) {
+            $db->getConnection()->exec("ROLLBACK;");
+            Session::setFlash('error', 'Deletion failed: ' . $e->getMessage());
+        }
+
         return $response->redirect('/coordinator/companies');
     }
 }

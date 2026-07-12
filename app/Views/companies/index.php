@@ -90,22 +90,30 @@ $role = Auth::getRole();
                                         <?php endif; ?>
                                     </td>
                                     <td class="py-3 text-right">
-                                        <?php if ($c['status'] === 'pending'): ?>
-                                            <div class="inline-flex space-x-1">
-                                                <form action="/siwes/coordinator/company/verify" method="POST">
-                                                    <input type="hidden" name="company_id" value="<?= $c['id'] ?>">
-                                                    <input type="hidden" name="status" value="verified">
-                                                    <button type="submit" class="bg-success/10 hover:bg-success text-success hover:text-white px-2.5 py-1.5 rounded-lg text-xs font-bold transition">Verify</button>
-                                                </form>
+                                        <div class="inline-flex space-x-1 justify-end">
+                                            <!-- Verification/Suspend Toggle -->
+                                            <?php if ($c['status'] === 'verified'): ?>
                                                 <form action="/siwes/coordinator/company/verify" method="POST">
                                                     <input type="hidden" name="company_id" value="<?= $c['id'] ?>">
                                                     <input type="hidden" name="status" value="rejected">
-                                                    <button type="submit" class="bg-danger/10 hover:bg-danger text-danger hover:text-white px-2.5 py-1.5 rounded-lg text-xs font-bold transition">Reject</button>
+                                                    <button type="submit" class="bg-warning/10 hover:bg-warning text-warning hover:text-white px-2.5 py-1.5 rounded-lg text-xs font-bold transition">Suspend</button>
                                                 </form>
-                                            </div>
-                                        <?php else: ?>
-                                            <span class="text-xs text-slate-400">Reviewed</span>
-                                        <?php endif; ?>
+                                            <?php else: ?>
+                                                <form action="/siwes/coordinator/company/verify" method="POST">
+                                                    <input type="hidden" name="company_id" value="<?= $c['id'] ?>">
+                                                    <input type="hidden" name="status" value="verified">
+                                                    <button type="submit" class="bg-success/10 hover:bg-success text-success hover:text-white px-2.5 py-1.5 rounded-lg text-xs font-bold transition">
+                                                        <?= $c['status'] === 'rejected' ? 'Activate' : 'Verify' ?>
+                                                    </button>
+                                                </form>
+                                            <?php endif; ?>
+
+                                            <!-- Permanent Delete -->
+                                            <form action="/siwes/coordinator/company/delete" method="POST" onsubmit="return confirm('WARNING: Permanently delete this company? All linked supervisor records will be affected.');">
+                                                <input type="hidden" name="company_id" value="<?= $c['id'] ?>">
+                                                <button type="submit" class="bg-danger/10 hover:bg-danger text-danger hover:text-white px-2.5 py-1.5 rounded-lg text-xs font-bold transition">Delete</button>
+                                            </form>
+                                        </div>
                                     </td>
                                 <?php endif; ?>
                             </tr>
