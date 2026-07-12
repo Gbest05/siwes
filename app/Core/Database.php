@@ -11,12 +11,37 @@ class Database {
 
     private function __construct() {
         $dbPath = dirname(__DIR__) . '/Database/siwes.db';
+        $isNew = !file_exists($dbPath) || filesize($dbPath) === 0;
+
         try {
             $this->db = new SQLite3($dbPath);
             $this->db->enableExceptions(true);
             $this->db->exec("PRAGMA foreign_keys = ON;");
+
+            if ($isNew) {
+                $this->initializeDatabase();
+            }
         } catch (Exception $e) {
             die("Database Connection Error: " . $e->getMessage());
+        }
+    }
+
+    private function initializeDatabase() {
+        // 1. Run Schema
+        $schemaPath = dirname(__DIR__) . '/Database/schema.sql';
+        if (file_exists($schemaPath)) {
+            $schemaSql = file_get_contents($schemaPath);
+            $this->db->exec($schemaSql);
+        }
+
+        // 2. Run Seeder
+        $seederPath = dirname(__DIR__) . '/Database/seeder.php';
+        if (file_exists($seederPath)) {
+            require_once $seederPath;
+            ob_start();
+            $seeder = new \Seeder($this->db);
+            $seeder->seed();
+            ob_end_clean();
         }
     }
 

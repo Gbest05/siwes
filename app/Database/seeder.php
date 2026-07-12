@@ -532,7 +532,7 @@ class Seeder {
                 'title' => 'Bioscience & Chemistry',
                 'description' => 'Learn plant pathology testing, laboratory analytics, and soil sample chemical extraction.',
                 'badge' => 'Trending',
-                'image_name' => 'biochemistry.png',
+                'image_name' => 'biochem.png',
                 'company_name' => 'NIHORT',
                 'company_initials' => 'NI',
                 'rating' => 4.7,
