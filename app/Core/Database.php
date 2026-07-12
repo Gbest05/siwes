@@ -1,0 +1,82 @@
+<?php
+
+namespace App\Core;
+
+use SQLite3;
+use Exception;
+
+class Database {
+    private static $instance = null;
+    private $db;
+
+    private function __construct() {
+        $dbPath = dirname(__DIR__) . '/Database/siwes.db';
+        try {
+            $this->db = new SQLite3($dbPath);
+            $this->db->enableExceptions(true);
+            $this->db->exec("PRAGMA foreign_keys = ON;");
+        } catch (Exception $e) {
+            die("Database Connection Error: " . $e->getMessage());
+        }
+    }
+
+    public static function getInstance() {
+        if (self::$instance === null) {
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
+
+    public function getConnection() {
+        return $this->db;
+    }
+
+    // Helper methods to simplify queries
+    public function query($sql, $params = []) {
+        $stmt = $this->db->prepare($sql);
+        foreach ($params as $key => $val) {
+            $stmt->bindValue($key, $val);
+        }
+        return $stmt->execute();
+    }
+
+    public function fetchAll($sql, $params = []) {
+        $result = $this->query($sql, $params);
+        $rows = [];
+        if ($result) {
+            while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+                $rows[] = $row;
+            }
+        }
+        return $rows;
+    }
+
+    public function fetchRow($sql, $params = []) {
+        $result = $this->query($sql, $params);
+        if ($result) {
+            return $result->fetchArray(SQLITE3_ASSOC);
+        }
+        return null;
+    }
+
+    public function querySingle($sql, $params = []) {
+        $stmt = $this->db->prepare($sql);
+        foreach ($params as $key => $val) {
+            $stmt->bindValue($key, $val);
+        }
+        $result = $stmt->execute();
+        if ($result) {
+            $row = $result->fetchArray(SQLITE3_NUM);
+            return $row ? $row[0] : null;
+        }
+        return null;
+    }
+
+    public function lastInsertRowID() {
+        return $this->db->lastInsertRowID();
+    }
+
+    public function escapeString($string) {
+        return SQLite3::escapeString($string);
+    }
+}
