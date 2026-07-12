@@ -83,13 +83,13 @@ class AuthController {
         }
 
         // Begin Transaction
-        $db->exec("BEGIN TRANSACTION;");
+        $db->getConnection()->exec("BEGIN TRANSACTION;");
 
         try {
             $passwordHash = password_hash($password, PASSWORD_BCRYPT);
             
             // Insert User
-            $stmt = $db->prepare("INSERT INTO users (username, email, password_hash, role, status) VALUES (:u, :e, :p, :r, 'active')");
+            $stmt = $db->getConnection()->prepare("INSERT INTO users (username, email, password_hash, role, status) VALUES (:u, :e, :p, :r, 'active')");
             $stmt->bindValue(':u', $username);
             $stmt->bindValue(':e', $email);
             $stmt->bindValue(':p', $passwordHash);
@@ -111,7 +111,7 @@ class AuthController {
                     throw new \Exception("Required student details are missing.");
                 }
 
-                $stmt = $db->prepare("INSERT INTO students (user_id, matric_no, first_name, last_name, department_id, course_of_study, year_of_study, phone, siwes_status) VALUES (:uid, :mat, :first, :last, :dept, :course, :yr, :phone, 'unallocated')");
+                $stmt = $db->getConnection()->prepare("INSERT INTO students (user_id, matric_no, first_name, last_name, department_id, course_of_study, year_of_study, phone, siwes_status) VALUES (:uid, :mat, :first, :last, :dept, :course, :yr, :phone, 'unallocated')");
                 $stmt->bindValue(':uid', $userId);
                 $stmt->bindValue(':mat', $matric);
                 $stmt->bindValue(':first', $first);
@@ -132,7 +132,7 @@ class AuthController {
                     throw new \Exception("Required supervisor details are missing.");
                 }
 
-                $stmt = $db->prepare("INSERT INTO supervisors (user_id, company_id, first_name, last_name, phone, type) VALUES (:uid, :cid, :first, :last, :phone, 'company')");
+                $stmt = $db->getConnection()->prepare("INSERT INTO supervisors (user_id, company_id, first_name, last_name, phone, type) VALUES (:uid, :cid, :first, :last, :phone, 'company')");
                 $stmt->bindValue(':uid', $userId);
                 $stmt->bindValue(':cid', !empty($companyId) ? $companyId : null);
                 $stmt->bindValue(':first', $first);
@@ -141,13 +141,13 @@ class AuthController {
                 $stmt->execute();
             }
 
-            $db->exec("COMMIT;");
+            $db->getConnection()->exec("COMMIT;");
             
             Session::setFlash('success', 'Registration successful! You can now log in.');
             return $response->redirect('/auth/login');
 
         } catch (\Exception $e) {
-            $db->exec("ROLLBACK;");
+            $db->getConnection()->exec("ROLLBACK;");
             Session::setFlash('error', 'Registration failed: ' . $e->getMessage());
             return $response->redirect('/auth/register');
         }
@@ -202,7 +202,7 @@ class AuthController {
         $db = Database::getInstance();
         $passwordHash = password_hash($password, PASSWORD_BCRYPT);
         
-        $stmt = $db->prepare("UPDATE users SET password_hash = :p WHERE email = :e");
+        $stmt = $db->getConnection()->prepare("UPDATE users SET password_hash = :p WHERE email = :e");
         $stmt->bindValue(':p', $passwordHash);
         $stmt->bindValue(':e', $email);
         $stmt->execute();
