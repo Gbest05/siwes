@@ -237,7 +237,7 @@ $linkClass = function($path) use ($isActive) {
                                 <i class="fa-solid fa-bell text-lg"></i>
                                 <span class="absolute top-1 right-1 w-2 h-2 bg-danger rounded-full ring-2 ring-white dark:ring-darkCard"></span>
                             </button>
-                            <div x-show="open" @click.away="open = false" x-transition class="absolute right-0 mt-2 w-80 bg-white dark:bg-darkCard rounded-2xl shadow-xl border border-slate-150 dark:border-slate-800 py-2 z-50 text-slate-800 dark:text-white">
+                            <div x-show="open" @click.away="open = false" x-transition class="fixed inset-x-4 md:absolute md:right-0 md:left-auto md:w-80 mt-2 bg-white dark:bg-darkCard rounded-2xl shadow-xl border border-slate-150 dark:border-slate-800 py-2 z-50 text-slate-800 dark:text-white">
                                 <div class="px-4 py-2 border-b border-slate-100 dark:border-slate-800 font-semibold flex justify-between items-center">
                                     <span>Notifications</span>
                                     <span class="text-xs bg-accent/10 text-[#0A0E1A] px-2 py-0.5 rounded-full font-bold">New</span>
@@ -261,7 +261,7 @@ $linkClass = function($path) use ($isActive) {
                 </header>
 
                 <!-- Page content viewport -->
-                <main class="flex-1 overflow-y-auto overflow-x-hidden p-6">
+                <main class="flex-1 overflow-y-auto overflow-x-hidden p-6 pb-24 md:pb-6">
                     <!-- Toast notifications -->
                     <?php if (Session::hasFlash('success')): ?>
                         <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" class="mb-6 bg-success/15 border-l-4 border-success p-4 rounded-r-xl flex items-center justify-between text-success dark:bg-success/5">

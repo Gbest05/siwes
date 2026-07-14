@@ -81,33 +81,37 @@ class SettingController {
                 return $response->redirect('/settings');
             }
 
-            $db->exec("BEGIN TRANSACTION;");
+            $db->getConnection()->exec("BEGIN TRANSACTION;");
             try {
                 // Update User table
-                $stmt = $db->prepare("UPDATE users SET email = :e WHERE id = :uid");
+                $stmt = $db->getConnection()->prepare("UPDATE users SET email = :e WHERE id = :uid");
                 $stmt->bindValue(':e', $email);
                 $stmt->bindValue(':uid', $user['id']);
                 $stmt->execute();
 
                 // Update Role profile table
                 if ($user['role'] === 'student') {
-                    $stmtStud = $db->prepare("UPDATE students SET first_name = :f, last_name = :l, phone = :p WHERE user_id = :uid");
+                    $stmtStud = $db->getConnection()->prepare("UPDATE students SET first_name = :f, last_name = :l, phone = :p WHERE user_id = :uid");
                     $stmtStud->bindValue(':f', $first);
                     $stmtStud->bindValue(':l', $last);
                     $stmtStud->bindValue(':p', $phone);
+                    $stmtStud->bindValue(':uid', $user['id']);
                     $stmtStud->execute();
                 } elseif ($user['role'] === 'supervisor') {
-                    $stmtSuper = $db->prepare("UPDATE supervisors SET first_name = :f, last_name = :l, phone = :p WHERE user_id = :uid");
+                    $stmtSuper = $db->getConnection()->prepare("UPDATE supervisors SET first_name = :f, last_name = :l, phone = :p WHERE user_id = :uid");
                     $stmtSuper->bindValue(':f', $first);
                     $stmtSuper->bindValue(':l', $last);
                     $stmtSuper->bindValue(':p', $phone);
+                    $stmtSuper->bindValue(':uid', $user['id']);
                     $stmtSuper->execute();
                 }
 
-                $db->exec("COMMIT;");
+                $db->getConnection()->exec("COMMIT;");
                 Session::setFlash('success', 'Profile details updated successfully.');
             } catch (\Exception $e) {
-                $db->exec("ROLLBACK;");
+                try {
+                    $db->getConnection()->exec("ROLLBACK;");
+                } catch (\Exception $rollbackEx) {}
                 Session::setFlash('error', 'Update failed: ' . $e->getMessage());
             }
 
@@ -217,7 +221,9 @@ class SettingController {
                 $db->getConnection()->exec("COMMIT;");
                 Session::setFlash('success', 'System configurations updated successfully.');
             } catch (\Exception $e) {
-                $db->getConnection()->exec("ROLLBACK;");
+                try {
+                    $db->getConnection()->exec("ROLLBACK;");
+                } catch (\Exception $rollbackEx) {}
                 Session::setFlash('error', 'System update failed: ' . $e->getMessage());
             }
         }

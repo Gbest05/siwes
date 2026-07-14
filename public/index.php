@@ -4,6 +4,58 @@
 require_once dirname(__DIR__) . '/app/Core/Session.php';
 \App\Core\Session::start();
 
+// Graceful check for SQLite3 PHP extension availability
+if (!class_exists('SQLite3')) {
+    http_response_code(500);
+    ?>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Configuration Required: SQLite3 Extension Missing</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    </head>
+    <body class="bg-slate-950 text-slate-100 min-h-screen flex items-center justify-center p-6 font-sans">
+        <div class="max-w-2xl w-full bg-slate-900 rounded-[28px] border border-slate-800 p-8 shadow-2xl space-y-6">
+            <div class="flex items-center space-x-4 border-b border-slate-800 pb-6">
+                <div class="w-14 h-14 bg-amber-500/10 text-amber-500 rounded-2xl flex items-center justify-center text-2xl shrink-0">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold font-poppins">SQLite3 PHP Extension Required</h1>
+                    <p class="text-xs text-slate-400 mt-1">Your local PHP environment is missing the SQLite3 driver module.</p>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <h3 class="text-sm font-semibold text-white uppercase tracking-wider">How to Fix in XAMPP:</h3>
+                <ol class="list-decimal list-inside text-xs text-slate-350 space-y-2.5">
+                    <li>Open your <strong class="text-amber-550">XAMPP Control Panel</strong>.</li>
+                    <li>Click the <strong class="text-amber-550">Config</strong> button next to <strong class="text-amber-555">Apache</strong>, and choose <strong class="text-white">PHP (php.ini)</strong>.</li>
+                    <li>Press <kbd class="bg-slate-800 px-1.5 py-0.5 rounded text-[10px]">Ctrl + F</kbd> and search for <code class="bg-slate-950 px-1.5 py-0.5 rounded font-mono text-amber-400">extension=sqlite3</code>.</li>
+                    <li>Remove the semicolon (<code class="text-amber-550">;</code>) from the start of the line so it looks exactly like this:
+                        <pre class="bg-slate-950 p-2.5 rounded mt-2 font-mono text-emerald-400">extension=sqlite3
+extension=pdo_sqlite</pre>
+                    </li>
+                    <li>Save the file (<kbd class="bg-slate-800 px-1.5 py-0.5 rounded text-[10px]">Ctrl + S</kbd>).</li>
+                    <li>Click <strong class="text-amber-550">Stop</strong> and then <strong class="text-amber-555">Start</strong> on Apache in XAMPP to restart the server.</li>
+                </ol>
+            </div>
+
+            <div class="space-y-3 pt-4 border-t border-slate-800">
+                <h3 class="text-sm font-semibold text-white uppercase tracking-wider">How to Fix in command line / terminal:</h3>
+                <p class="text-xs text-slate-350">Run the PHP server by dynamically loading the extension DLL files:</p>
+                <pre class="bg-slate-950 p-3 rounded font-mono text-xs text-amber-400 overflow-x-auto">php -d extension=php_sqlite3.dll -d extension=php_pdo_sqlite.dll -S localhost:8000 -t public</pre>
+            </div>
+        </div>
+    </body>
+    </html>
+    <?php
+    exit;
+}
+
 // Global asset path helper
 function asset($path) {
     $path = ltrim($path, '/');

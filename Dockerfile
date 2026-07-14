@@ -41,8 +41,8 @@ RUN mkdir -p /var/www/html/app/Database/backups \
     && mkdir -p /var/www/html/public/uploads/profiles \
     && touch /var/www/html/app/Database/siwes.db \
     && chown -R nginx:nginx /var/www/html \
-    && chmod -R 775 /var/www/html/app/Database \
-    && chmod -R 775 /var/www/html/public/uploads
+    && chmod -R 777 /var/www/html/app/Database \
+    && chmod -R 777 /var/www/html/public/uploads
 
 # Expose HTTP Port
 EXPOSE 80
