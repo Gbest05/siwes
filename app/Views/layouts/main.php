@@ -35,6 +35,11 @@ $linkClass = function($path) use ($isActive) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SIWES Allocation & Management Portal</title>
     
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="<?= asset('/assets/images/favicon.svg') ?>">
+    <link rel="alternate icon" href="<?= asset('/favicon.ico') ?>">
+    <link rel="shortcut icon" href="<?= asset('/favicon.ico') ?>">
+    
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -115,7 +120,7 @@ $linkClass = function($path) use ($isActive) {
                             <i class="fa-solid fa-user-shield text-lg w-5"></i> <span>Manage Users</span>
                         </a>
                         <a href="/siwes/coordinator/departments" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm transition-all <?= $linkClass('/coordinator/departments') ?>">
-                            <i class="fa-solid fa-graduation-cap text-lg w-5"></i> <span>Manage Departments</span>
+                            <i class="fa-solid fa-graduation-cap text-lg w-5"></i> <span>Departments & Levels</span>
                         </a>
                         <a href="/siwes/coordinator/allocations" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm transition-all <?= $linkClass('/coordinator/allocations') ?>">
                             <i class="fa-solid fa-shuffle text-lg w-5"></i> <span>SIWES Allocations</span>
@@ -125,6 +130,9 @@ $linkClass = function($path) use ($isActive) {
                         </a>
                         <a href="/siwes/coordinator/companies" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm transition-all <?= $linkClass('/coordinator/companies') ?>">
                             <i class="fa-solid fa-building text-lg w-5"></i> <span>Manage Companies</span>
+                        </a>
+                        <a href="/siwes/coordinator/complaints" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm transition-all <?= $linkClass('/coordinator/complaints') ?>">
+                            <i class="fa-solid fa-triangle-exclamation text-lg w-5"></i> <span>Complaints & Queries</span>
                         </a>
                         <a href="/siwes/coordinator/reports" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm transition-all <?= $linkClass('/coordinator/reports') ?>">
                             <i class="fa-solid fa-file-invoice text-lg w-5"></i> <span>Reports & Export</span>
@@ -139,16 +147,22 @@ $linkClass = function($path) use ($isActive) {
                             <i class="fa-solid fa-user-shield text-lg w-5"></i> <span>User Management</span>
                         </a>
                         <a href="/siwes/coordinator/departments" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm transition-all <?= $linkClass('/coordinator/departments') ?>">
-                            <i class="fa-solid fa-graduation-cap text-lg w-5"></i> <span>Departments</span>
+                            <i class="fa-solid fa-graduation-cap text-lg w-5"></i> <span>Departments & Levels</span>
                         </a>
                         <a href="/siwes/coordinator/allocations" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm transition-all <?= $linkClass('/coordinator/allocations') ?>">
                             <i class="fa-solid fa-shuffle text-lg w-5"></i> <span>SIWES Allocations</span>
+                        </a>
+                        <a href="/siwes/coordinator/letters/placement" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm transition-all <?= $linkClass('/coordinator/letters/placement') ?>">
+                            <i class="fa-solid fa-file-signature text-lg w-5"></i> <span>Edit Placement Letter</span>
                         </a>
                         <a href="/siwes/coordinator/students" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm transition-all <?= $linkClass('/coordinator/students') ?>">
                             <i class="fa-solid fa-users text-lg w-5"></i> <span>Students Audit</span>
                         </a>
                         <a href="/siwes/coordinator/companies" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm transition-all <?= $linkClass('/coordinator/companies') ?>">
                             <i class="fa-solid fa-building text-lg w-5"></i> <span>Partner Directory</span>
+                        </a>
+                        <a href="/siwes/coordinator/complaints" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm transition-all <?= $linkClass('/coordinator/complaints') ?>">
+                            <i class="fa-solid fa-triangle-exclamation text-lg w-5"></i> <span>Complaints & Queries</span>
                         </a>
                         <a href="/siwes/coordinator/reports" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm transition-all <?= $linkClass('/coordinator/reports') ?>">
                             <i class="fa-solid fa-file-invoice text-lg w-5"></i> <span>Print Reports</span>
@@ -171,17 +185,32 @@ $linkClass = function($path) use ($isActive) {
                         <a href="/siwes/student/dashboard" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm transition-all <?= $linkClass('/student/dashboard') ?>">
                             <i class="fa-solid fa-gauge-high text-lg w-5"></i> <span>Overview Dashboard</span>
                         </a>
-                        <a href="/siwes/student/logbook" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm transition-all <?= $linkClass('/student/logbook') ?>">
-                            <i class="fa-solid fa-book-open text-lg w-5"></i> <span>Daily Logbook</span>
+                        <a href="/siwes/student/logbook" class="flex items-center justify-between px-4 py-3 rounded-xl text-sm transition-all <?= $linkClass('/student/logbook') ?>">
+                            <div class="flex items-center space-x-3">
+                                <i class="fa-solid fa-book-open text-lg w-5"></i> <span>Daily Logbook</span>
+                            </div>
+                            <?php if (($user['profile']['document_status'] ?? 'pending') !== 'approved'): ?>
+                                <i class="fa-solid fa-lock text-xs text-amber-400" title="Locked pending departmental supervisor approval"></i>
+                            <?php endif; ?>
                         </a>
                     <?php endif; ?>
 
                     <?php if ($role === 'supervisor'): ?>
+                        <?php $isDeptSup = ($user['profile']['type'] ?? '') === 'institution'; ?>
                         <a href="/siwes/supervisor/dashboard" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm transition-all <?= $linkClass('/supervisor/dashboard') ?>">
-                            <i class="fa-solid fa-gauge-high text-lg w-5"></i> <span>My Students</span>
+                            <i class="<?= $isDeptSup ? 'fa-solid fa-graduation-cap' : 'fa-solid fa-gauge-high' ?> text-lg w-5"></i> 
+                            <span><?= $isDeptSup ? 'Department Portal' : 'My Students' ?></span>
                         </a>
-                        <a href="/siwes/supervisor/logbooks" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm transition-all <?= $linkClass('/supervisor/logbooks') ?>">
-                            <i class="fa-solid fa-list-check text-lg w-5"></i> <span>Verify Logbooks</span>
+                        <?php if (!$isDeptSup): ?>
+                            <a href="/siwes/supervisor/logbooks" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm transition-all <?= $linkClass('/supervisor/logbooks') ?>">
+                                <i class="fa-solid fa-list-check text-lg w-5"></i> <span>Verify Logbooks</span>
+                            </a>
+                            <a href="/siwes/company/application-letter/edit" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm transition-all <?= $linkClass('/company/application-letter/edit') ?>">
+                                <i class="fa-solid fa-file-pen text-lg w-5"></i> <span>Edit Company Letter</span>
+                            </a>
+                        <?php endif; ?>
+                        <a href="/siwes/coordinator/complaints" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm transition-all <?= $linkClass('/coordinator/complaints') ?>">
+                            <i class="fa-solid fa-triangle-exclamation text-lg w-5"></i> <span>Complaints & Queries</span>
                         </a>
                     <?php endif; ?>
 
@@ -435,6 +464,9 @@ $linkClass = function($path) use ($isActive) {
                     <a href="/siwes/coordinator/companies" @click="mobileMenuOpen = false" class="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-105 dark:hover:bg-slate-800 transition text-slate-700 dark:text-gray-300">
                         <i class="fa-solid fa-building text-lg w-5"></i> <span>Manage Companies</span>
                     </a>
+                    <a href="/siwes/coordinator/complaints" @click="mobileMenuOpen = false" class="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-105 dark:hover:bg-slate-800 transition text-slate-700 dark:text-gray-300">
+                        <i class="fa-solid fa-triangle-exclamation text-lg w-5"></i> <span>Complaints & Queries</span>
+                    </a>
                     <a href="/siwes/coordinator/reports" @click="mobileMenuOpen = false" class="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-105 dark:hover:bg-slate-800 transition text-slate-700 dark:text-gray-300">
                         <i class="fa-solid fa-file-invoice text-lg w-5"></i> <span>Reports & Export</span>
                     </a>
@@ -447,11 +479,17 @@ $linkClass = function($path) use ($isActive) {
                     <a href="/siwes/coordinator/allocations" @click="mobileMenuOpen = false" class="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-105 dark:hover:bg-slate-800 transition text-slate-700 dark:text-gray-300">
                         <i class="fa-solid fa-shuffle text-lg w-5"></i> <span>SIWES Allocations</span>
                     </a>
+                    <a href="/siwes/coordinator/letters/placement" @click="mobileMenuOpen = false" class="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-105 dark:hover:bg-slate-800 transition text-slate-700 dark:text-gray-300">
+                        <i class="fa-solid fa-file-signature text-lg w-5"></i> <span>Edit Placement Letter</span>
+                    </a>
                     <a href="/siwes/coordinator/students" @click="mobileMenuOpen = false" class="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-105 dark:hover:bg-slate-800 transition text-slate-700 dark:text-gray-300">
                         <i class="fa-solid fa-users text-lg w-5"></i> <span>Students Audit</span>
                     </a>
                     <a href="/siwes/coordinator/companies" @click="mobileMenuOpen = false" class="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-105 dark:hover:bg-slate-800 transition text-slate-700 dark:text-gray-300">
                         <i class="fa-solid fa-building text-lg w-5"></i> <span>Partner Directory</span>
+                    </a>
+                    <a href="/siwes/coordinator/complaints" @click="mobileMenuOpen = false" class="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-105 dark:hover:bg-slate-800 transition text-slate-700 dark:text-gray-300">
+                        <i class="fa-solid fa-triangle-exclamation text-lg w-5"></i> <span>Complaints & Queries</span>
                     </a>
                     <a href="/siwes/coordinator/reports" @click="mobileMenuOpen = false" class="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-105 dark:hover:bg-slate-800 transition text-slate-700 dark:text-gray-300">
                         <i class="fa-solid fa-file-invoice text-lg w-5"></i> <span>Print Reports</span>
@@ -480,11 +518,20 @@ $linkClass = function($path) use ($isActive) {
                 <?php endif; ?>
 
                 <?php if ($role === 'supervisor'): ?>
+                    <?php $isDeptSup = ($user['profile']['type'] ?? '') === 'institution'; ?>
                     <a href="/siwes/supervisor/dashboard" @click="mobileMenuOpen = false" class="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-105 dark:hover:bg-slate-800 transition text-slate-700 dark:text-gray-300">
-                        <i class="fa-solid fa-gauge-high text-lg w-5"></i> <span>My Students</span>
+                        <i class="<?= $isDeptSup ? 'fa-solid fa-graduation-cap' : 'fa-solid fa-gauge-high' ?> text-lg w-5"></i> <span><?= $isDeptSup ? 'Department Portal' : 'My Students' ?></span>
                     </a>
-                    <a href="/siwes/supervisor/logbooks" @click="mobileMenuOpen = false" class="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-105 dark:hover:bg-slate-800 transition text-slate-700 dark:text-gray-300">
-                        <i class="fa-solid fa-list-check text-lg w-5"></i> <span>Verify Logbooks</span>
+                    <?php if (!$isDeptSup): ?>
+                        <a href="/siwes/supervisor/logbooks" @click="mobileMenuOpen = false" class="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-105 dark:hover:bg-slate-800 transition text-slate-700 dark:text-gray-300">
+                            <i class="fa-solid fa-list-check text-lg w-5"></i> <span>Verify Logbooks</span>
+                        </a>
+                        <a href="/siwes/company/application-letter/edit" @click="mobileMenuOpen = false" class="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-105 dark:hover:bg-slate-800 transition text-slate-700 dark:text-gray-300">
+                            <i class="fa-solid fa-file-pen text-lg w-5"></i> <span>Edit Company Letter</span>
+                        </a>
+                    <?php endif; ?>
+                    <a href="/siwes/coordinator/complaints" @click="mobileMenuOpen = false" class="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-105 dark:hover:bg-slate-800 transition text-slate-700 dark:text-gray-300">
+                        <i class="fa-solid fa-triangle-exclamation text-lg w-5"></i> <span>Complaints & Queries</span>
                     </a>
                 <?php endif; ?>
             <?php else: ?>

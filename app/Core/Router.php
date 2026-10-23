@@ -28,6 +28,9 @@ class Router {
     }
 
     public function dispatch($requestUri, $requestMethod) {
+        // Treat HEAD as GET for standard routing
+        $effectiveMethod = ($requestMethod === 'HEAD') ? 'GET' : $requestMethod;
+
         // Strip query string from URI
         $parts = explode('?', $requestUri);
         $uri = rtrim($parts[0], '/');
@@ -36,7 +39,7 @@ class Router {
         }
 
         foreach ($this->routes as $route) {
-            if ($route['method'] !== $requestMethod) {
+            if ($route['method'] !== $effectiveMethod) {
                 continue;
             }
 

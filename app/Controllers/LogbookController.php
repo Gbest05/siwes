@@ -16,6 +16,17 @@ class LogbookController {
         $user = Auth::user();
         $studentId = $user['profile']['id'];
 
+        // Get student's fresh verification status and assigned departmental supervisor
+        $student = $db->fetchRow("SELECT s.*, d.name as department_name, sup.first_name || ' ' || sup.last_name as dept_supervisor_name, sup.phone as dept_supervisor_phone, sup_user.email as dept_supervisor_email 
+            FROM students s 
+            JOIN departments d ON s.department_id = d.id 
+            LEFT JOIN allocations a ON a.student_id = s.id 
+            LEFT JOIN supervisors sup ON a.institution_supervisor_id = sup.id 
+            LEFT JOIN users sup_user ON sup.user_id = sup_user.id 
+            WHERE s.id = :sid LIMIT 1", [':sid' => $studentId]);
+
+        $isLocked = ($student['document_status'] ?? 'pending') !== 'approved';
+
         // Get daily logbooks
         $logs = $db->fetchAll("SELECT * FROM logbooks WHERE student_id = :sid ORDER BY date DESC", [
             ':sid' => $studentId
@@ -29,7 +40,9 @@ class LogbookController {
         $response = new Response();
         return $response->render('logbook/student', [
             'logs' => $logs,
-            'weeklyReports' => $weeklyReports
+            'weeklyReports' => $weeklyReports,
+            'isLocked' => $isLocked,
+            'student' => $student
         ]);
     }
 
@@ -42,6 +55,13 @@ class LogbookController {
         $studentId = $user['profile']['id'];
 
         if (!$request->isPost()) {
+            return $response->redirect('/student/logbook');
+        }
+
+        // Enforce: Student cannot access/submit logbook until Departmental Supervisor approves documents
+        $docStatus = $db->querySingle("SELECT document_status FROM students WHERE id = :sid", [':sid' => $studentId]);
+        if ($docStatus !== 'approved') {
+            Session::setFlash('error', 'Action restricted: Your SIWES registration and documents must first be verified and approved by your Departmental Supervisor before daily logs can be entered.');
             return $response->redirect('/student/logbook');
         }
 
@@ -79,7 +99,7 @@ class LogbookController {
 
         try {
             // Save Daily Log
-            $stmt = $db->prepare("INSERT OR REPLACE INTO logbooks (student_id, date, day_of_week, activity_description, image_path, supervisor_status, week_number) VALUES (:sid, :dt, :day, :act, :img, 'pending', :week)");
+            $stmt = $db->getConnection()->prepare("INSERT OR REPLACE INTO logbooks (student_id, date, day_of_week, activity_description, image_path, supervisor_status, week_number) VALUES (:sid, :dt, :day, :act, :img, 'pending', :week)");
             $stmt->bindValue(':sid', $studentId);
             $stmt->bindValue(':dt', $date);
             $stmt->bindValue(':day', $dayOfWeek);
@@ -89,7 +109,7 @@ class LogbookController {
             $stmt->execute();
 
             // Log Attendance Auto
-            $stmtAttend = $db->prepare("INSERT OR IGNORE INTO attendance (student_id, date, status) VALUES (:sid, :dt, 'present')");
+            $stmtAttend = $db->getConnection()->prepare("INSERT OR IGNORE INTO attendance (student_id, date, status) VALUES (:sid, :dt, 'present')");
             $stmtAttend->bindValue(':sid', $studentId);
             $stmtAttend->bindValue(':dt', $date);
             $stmtAttend->execute();
@@ -114,6 +134,13 @@ class LogbookController {
             return $response->redirect('/student/logbook');
         }
 
+        // Enforce: Student cannot access/submit logbook until Departmental Supervisor approves documents
+        $docStatus = $db->querySingle("SELECT document_status FROM students WHERE id = :sid", [':sid' => $studentId]);
+        if ($docStatus !== 'approved') {
+            Session::setFlash('error', 'Action restricted: Your SIWES registration and documents must first be verified and approved by your Departmental Supervisor before weekly summaries can be entered.');
+            return $response->redirect('/student/logbook');
+        }
+
         $weekNo = (int) $request->post('week_number');
         $summary = $request->post('summary');
 
@@ -123,7 +150,7 @@ class LogbookController {
         }
 
         try {
-            $stmt = $db->prepare("INSERT OR REPLACE INTO weekly_reports (student_id, week_number, summary, supervisor_status) VALUES (:sid, :week, :sum, 'pending')");
+            $stmt = $db->getConnection()->prepare("INSERT OR REPLACE INTO weekly_reports (student_id, week_number, summary, supervisor_status) VALUES (:sid, :week, :sum, 'pending')");
             $stmt->bindValue(':sid', $studentId);
             $stmt->bindValue(':week', $weekNo);
             $stmt->bindValue(':sum', $summary);
@@ -184,9 +211,9 @@ class LogbookController {
         try {
             if ($type === 'daily') {
                 if ($user['role'] === 'supervisor') {
-                    $stmt = $db->prepare("UPDATE logbooks SET supervisor_status = :s, supervisor_comments = :c WHERE id = :id");
+                    $stmt = $db->getConnection()->prepare("UPDATE logbooks SET supervisor_status = :s, supervisor_comments = :c WHERE id = :id");
                 } else { // coordinator
-                    $stmt = $db->prepare("UPDATE logbooks SET coordinator_comments = :c WHERE id = :id");
+                    $stmt = $db->getConnection()->prepare("UPDATE logbooks SET coordinator_comments = :c WHERE id = :id");
                 }
                 $stmt->bindValue(':c', $comments);
                 if ($user['role'] === 'supervisor') {
@@ -200,10 +227,10 @@ class LogbookController {
                 $grade = $request->post('grade'); // 0-10 grade
                 
                 if ($user['role'] === 'supervisor') {
-                    $stmt = $db->prepare("UPDATE weekly_reports SET supervisor_status = :s, supervisor_comments = :c, supervisor_grade = :g WHERE id = :id");
+                    $stmt = $db->getConnection()->prepare("UPDATE weekly_reports SET supervisor_status = :s, supervisor_comments = :c, supervisor_grade = :g WHERE id = :id");
                     $stmt->bindValue(':g', !empty($grade) ? (int)$grade : null);
                 } else { // coordinator
-                    $stmt = $db->prepare("UPDATE weekly_reports SET coordinator_comments = :c WHERE id = :id");
+                    $stmt = $db->getConnection()->prepare("UPDATE weekly_reports SET coordinator_comments = :c WHERE id = :id");
                 }
                 $stmt->bindValue(':c', $comments);
                 if ($user['role'] === 'supervisor') {
@@ -252,7 +279,7 @@ class LogbookController {
         $companyId = $user['profile']['company_id'];
 
         try {
-            $stmt = $db->prepare("INSERT OR REPLACE INTO evaluations (student_id, company_id, supervisor_score, supervisor_remarks, final_grade, recommendations) VALUES (:sid, :cid, :score, :rem, :gr, :rec)");
+            $stmt = $db->getConnection()->prepare("INSERT OR REPLACE INTO evaluations (student_id, company_id, supervisor_score, supervisor_remarks, final_grade, recommendations) VALUES (:sid, :cid, :score, :rem, :gr, :rec)");
             $stmt->bindValue(':sid', $sid);
             $stmt->bindValue(':cid', $companyId);
             $stmt->bindValue(':score', $score);

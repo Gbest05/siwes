@@ -19,6 +19,19 @@ CREATE TABLE IF NOT EXISTS departments (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     code TEXT UNIQUE NOT NULL,
+    status TEXT CHECK(status IN ('active', 'inactive')) DEFAULT 'active',
+    show_on_signup INTEGER DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Academic Levels Table
+CREATE TABLE IF NOT EXISTS academic_levels (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    code TEXT NOT NULL UNIQUE,
+    year_value INTEGER NOT NULL DEFAULT 4,
+    status TEXT CHECK(status IN ('active', 'inactive')) DEFAULT 'active',
+    show_on_signup INTEGER DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -36,6 +49,10 @@ CREATE TABLE IF NOT EXISTS students (
     passport_path TEXT,
     cv_path TEXT,
     placement_letter_path TEXT,
+    acceptance_letter_path TEXT,
+    documents_submitted INTEGER DEFAULT 0,
+    document_status TEXT CHECK(document_status IN ('pending', 'approved', 'queried')) DEFAULT 'pending',
+    supervisor_feedback TEXT,
     siwes_status TEXT CHECK(siwes_status IN ('unallocated', 'pending_approval', 'allocated', 'completed')) DEFAULT 'unallocated',
     pref_company_1_id INTEGER,
     pref_company_2_id INTEGER,
@@ -214,6 +231,19 @@ CREATE INDEX IF NOT EXISTS idx_logbooks_date ON logbooks(date);
 CREATE INDEX IF NOT EXISTS idx_allocations_student ON allocations(student_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
 CREATE INDEX IF NOT EXISTS idx_messages_receiver ON messages(receiver_id);
+
+-- Complaints Table
+CREATE TABLE IF NOT EXISTS complaints (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    student_id INTEGER NOT NULL,
+    created_by_user_id INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    status TEXT CHECK(status IN ('open', 'resolved', 'in_progress')) DEFAULT 'open',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(student_id) REFERENCES students(id) ON DELETE CASCADE,
+    FOREIGN KEY(created_by_user_id) REFERENCES users(id) ON DELETE CASCADE
+);
 
 -- Contact Messages Table
 CREATE TABLE IF NOT EXISTS contact_messages (

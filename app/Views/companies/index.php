@@ -2,14 +2,19 @@
 use App\Core\Auth;
 $role = Auth::getRole();
 ?>
-<div class="space-y-8 animate-fade-in-up">
+<div class="space-y-8 animate-fade-in-up" x-data="{ showAddCompanyModal: false }">
     <!-- Header -->
-    <div class="flex justify-between items-center">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
             <h1 class="text-3xl font-poppins font-bold text-slate-800 dark:text-white">SIWES Partner Directory</h1>
-            <p class="text-sm text-slate-500 dark:text-gray-400">View affiliated corporate organizations, available attachment slots, and industrial sectors.</p>
+            <p class="text-sm text-slate-500 dark:text-gray-400">View affiliated corporate organizations, create companies, manage slots, and verify partnerships.</p>
         </div>
-        <div class="flex space-x-2 no-print">
+        <div class="flex items-center space-x-2 no-print">
+            <?php if (in_array($role, ['admin', 'coordinator'])): ?>
+                <button @click="showAddCompanyModal = true" class="bg-primary hover:bg-secondary text-white text-xs px-4 py-2.5 rounded-xl font-semibold shadow-md shadow-primary/20 transition flex items-center space-x-2">
+                    <i class="fa-solid fa-plus text-xs"></i> <span>Add Company</span>
+                </button>
+            <?php endif; ?>
             <button onclick="exportTableToCSV('companies-table', 'siwes_companies_list.csv')" class="bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-white border border-slate-200 dark:border-slate-700 text-sm px-4 py-2.5 rounded-xl font-semibold transition flex items-center space-x-2">
                 <i class="fa-solid fa-file-export text-accent"></i> <span>Export CSV</span>
             </button>
@@ -123,5 +128,64 @@ $role = Auth::getRole();
             </table>
         </div>
     </div>
+
+    <!-- Modal: Add New Company -->
+    <?php if (in_array($role, ['admin', 'coordinator'])): ?>
+        <div x-show="showAddCompanyModal" class="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" x-transition x-cloak>
+            <div class="bg-white dark:bg-darkCard w-full max-w-lg rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-xl space-y-6" @click.away="showAddCompanyModal = false">
+                <div class="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <h3 class="font-poppins font-bold text-slate-850 dark:text-white text-base">Add New Partner Company</h3>
+                    <button @click="showAddCompanyModal = false" class="text-slate-400 hover:text-slate-650 dark:hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+                </div>
+
+                <form action="/siwes/coordinator/company/add" method="POST" class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Company Name</label>
+                            <input type="text" name="name" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none dark:text-white" placeholder="Google Nigeria">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Official Email</label>
+                            <input type="email" name="email" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none dark:text-white" placeholder="siwes@google.com">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Phone Number</label>
+                            <input type="text" name="phone" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none dark:text-white" placeholder="+234...">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Contact Person</label>
+                            <input type="text" name="contact_person" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none dark:text-white" placeholder="Mr. Babatunde Lawal">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Physical Address / Location</label>
+                        <input type="text" name="address" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none dark:text-white" placeholder="Kingsway Tower, Ikoyi, Lagos">
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Industry Sector</label>
+                            <input type="text" name="industry_category" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none dark:text-white" placeholder="Software & Cloud Services">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Available Attachment Slots</label>
+                            <input type="number" name="available_slots" min="1" max="100" value="5" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none dark:text-white">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Specializations (Comma separated)</label>
+                        <input type="text" name="specializations" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none dark:text-white" placeholder="Web Development, Cyber Security, Cloud">
+                    </div>
+
+                    <button type="submit" class="w-full bg-primary hover:bg-secondary text-white py-3 rounded-xl font-semibold shadow-md shadow-primary/25 transition">Register Partner Company</button>
+                </form>
+            </div>
+        </div>
+    <?php endif; ?>
 </div>
 <script src="/siwes/public/assets/js/app.js"></script>

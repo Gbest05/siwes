@@ -46,13 +46,29 @@ class AuthController {
 
     public function registerView() {
         $db = Database::getInstance();
-        $departments = $db->fetchAll("SELECT * FROM departments");
-        $companies = $db->fetchAll("SELECT * FROM companies WHERE status = 'verified'");
+        
+        // Fetch only active departments enabled for registration
+        $departments = $db->fetchAll("SELECT * FROM departments WHERE status = 'active' AND show_on_signup = 1 ORDER BY name ASC");
+        if (empty($departments)) {
+            $departments = $db->fetchAll("SELECT * FROM departments WHERE status = 'active' ORDER BY name ASC");
+            if (empty($departments)) {
+                $departments = $db->fetchAll("SELECT * FROM departments ORDER BY name ASC");
+            }
+        }
+
+        // Fetch only active academic levels enabled for registration
+        $levels = $db->fetchAll("SELECT * FROM academic_levels WHERE status = 'active' AND show_on_signup = 1 ORDER BY year_value ASC");
+        if (empty($levels)) {
+            $levels = $db->fetchAll("SELECT * FROM academic_levels WHERE status = 'active' ORDER BY year_value ASC");
+            if (empty($levels)) {
+                $levels = $db->fetchAll("SELECT * FROM academic_levels ORDER BY year_value ASC");
+            }
+        }
 
         $response = new Response();
         return $response->render('auth/register', [
             'departments' => $departments,
-            'companies' => $companies
+            'levels' => $levels
         ], 'main');
     }
 
@@ -64,9 +80,9 @@ class AuthController {
         $username = strtolower(trim($request->post('username')));
         $email = strtolower(trim($request->post('email')));
         $password = $request->post('password');
-        $role = $request->post('role');
+        $role = 'student'; // Only student registration allowed on public sign up
 
-        if (empty($username) || empty($email) || empty($password) || empty($role)) {
+        if (empty($username) || empty($email) || empty($password)) {
             Session::setFlash('error', 'All fields are required.');
             return $response->redirect('/auth/register');
         }
@@ -98,52 +114,60 @@ class AuthController {
             
             $userId = $db->lastInsertRowID();
 
-            if ($role === 'student') {
-                $matric = trim($request->post('matric_no'));
-                $first = trim($request->post('first_name'));
-                $last = trim($request->post('last_name'));
-                $deptId = $request->post('department_id');
-                $course = trim($request->post('course_of_study'));
-                $year = $request->post('year_of_study');
-                $phone = trim($request->post('phone'));
-
-                if (empty($matric) || empty($first) || empty($last) || empty($deptId)) {
-                    throw new \Exception("Required student details are missing.");
+            $matric = trim($request->post('matric_no'));
+            $first = trim($request->post('first_name'));
+            $last = trim($request->post('last_name'));
+            
+            // Resolve Department from POST
+            $deptIdInput = (int)$request->post('department_id');
+            $department = null;
+            if ($deptIdInput > 0) {
+                $department = $db->fetchRow("SELECT * FROM departments WHERE id = :id AND status = 'active' AND show_on_signup = 1 LIMIT 1", [':id' => $deptIdInput]);
+                if (!$department) {
+                    $department = $db->fetchRow("SELECT * FROM departments WHERE id = :id LIMIT 1", [':id' => $deptIdInput]);
                 }
-
-                $stmt = $db->getConnection()->prepare("INSERT INTO students (user_id, matric_no, first_name, last_name, department_id, course_of_study, year_of_study, phone, siwes_status) VALUES (:uid, :mat, :first, :last, :dept, :course, :yr, :phone, 'unallocated')");
-                $stmt->bindValue(':uid', $userId);
-                $stmt->bindValue(':mat', $matric);
-                $stmt->bindValue(':first', $first);
-                $stmt->bindValue(':last', $last);
-                $stmt->bindValue(':dept', $deptId);
-                $stmt->bindValue(':course', $course);
-                $stmt->bindValue(':yr', $year);
-                $stmt->bindValue(':phone', $phone);
-                $stmt->execute();
-
-            } elseif ($role === 'supervisor') {
-                $first = trim($request->post('first_name'));
-                $last = trim($request->post('last_name'));
-                $companyId = $request->post('company_id');
-                $phone = trim($request->post('phone'));
-
-                if (empty($first) || empty($last)) {
-                    throw new \Exception("Required supervisor details are missing.");
-                }
-
-                $stmt = $db->getConnection()->prepare("INSERT INTO supervisors (user_id, company_id, first_name, last_name, phone, type) VALUES (:uid, :cid, :first, :last, :phone, 'company')");
-                $stmt->bindValue(':uid', $userId);
-                $stmt->bindValue(':cid', !empty($companyId) ? $companyId : null);
-                $stmt->bindValue(':first', $first);
-                $stmt->bindValue(':last', $last);
-                $stmt->bindValue(':phone', $phone);
-                $stmt->execute();
             }
+            if (!$department) {
+                $department = $db->fetchRow("SELECT * FROM departments WHERE status = 'active' AND show_on_signup = 1 ORDER BY id ASC LIMIT 1");
+                if (!$department) {
+                    $department = $db->fetchRow("SELECT * FROM departments ORDER BY id ASC LIMIT 1");
+                }
+            }
+            $deptId = $department ? $department['id'] : 1;
+            $course = $department ? $department['name'] : 'Computer Science';
+            
+            // Resolve Academic Level from POST
+            $levelInput = trim($request->post('level', '400 Level'));
+            $levelObj = $db->fetchRow("SELECT * FROM academic_levels WHERE (name = :lvl OR code = :lvl) AND status = 'active' AND show_on_signup = 1 LIMIT 1", [':lvl' => $levelInput]);
+            if (!$levelObj) {
+                $levelObj = $db->fetchRow("SELECT * FROM academic_levels WHERE (name = :lvl OR code = :lvl) LIMIT 1", [':lvl' => $levelInput]);
+            }
+            if ($levelObj) {
+                $year = (int)$levelObj['year_value'];
+            } else {
+                preg_match('/\d+/', $levelInput, $matches);
+                $year = !empty($matches) ? (int)substr($matches[0], 0, 1) : 4;
+            }
+            $phone = trim($request->post('phone'));
+
+            if (empty($matric) || empty($first) || empty($last)) {
+                throw new \Exception("Required student details are missing.");
+            }
+
+            $stmt = $db->getConnection()->prepare("INSERT INTO students (user_id, matric_no, first_name, last_name, department_id, course_of_study, year_of_study, phone, siwes_status) VALUES (:uid, :mat, :first, :last, :dept, :course, :yr, :phone, 'unallocated')");
+            $stmt->bindValue(':uid', $userId);
+            $stmt->bindValue(':mat', $matric);
+            $stmt->bindValue(':first', $first);
+            $stmt->bindValue(':last', $last);
+            $stmt->bindValue(':dept', $deptId);
+            $stmt->bindValue(':course', $course);
+            $stmt->bindValue(':yr', $year);
+            $stmt->bindValue(':phone', $phone);
+            $stmt->execute();
 
             $db->getConnection()->exec("COMMIT;");
             
-            Session::setFlash('success', 'Registration successful! You can now log in.');
+            Session::setFlash('success', 'Student account created successfully! You can now log in.');
             return $response->redirect('/auth/login');
 
         } catch (\Exception $e) {

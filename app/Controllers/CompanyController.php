@@ -126,4 +126,57 @@ class CompanyController {
 
         return $response->redirect('/coordinator/companies');
     }
+
+    public function add() {
+        Auth::requireRole(['admin', 'coordinator']);
+        $request = new Request();
+        $response = new Response();
+        $db = Database::getInstance();
+
+        if (!$request->isPost()) {
+            return $response->redirect('/coordinator/companies');
+        }
+
+        $name = trim($request->post('name', ''));
+        $email = strtolower(trim($request->post('email', '')));
+        $phone = trim($request->post('phone', ''));
+        $address = trim($request->post('address', ''));
+        $category = trim($request->post('industry_category', 'Information Technology'));
+        $slots = max(1, (int)$request->post('available_slots', 5));
+        $contactPerson = trim($request->post('contact_person', ''));
+        $specializations = trim($request->post('specializations', 'Software Development, Networking'));
+
+        if (empty($name) || empty($email) || empty($address) || empty($contactPerson)) {
+            Session::setFlash('error', 'Company name, email, address, and contact person are required.');
+            return $response->redirect('/coordinator/companies');
+        }
+
+        $exists = $db->fetchRow("SELECT id FROM companies WHERE email = :e LIMIT 1", [':e' => $email]);
+        if ($exists) {
+            Session::setFlash('error', "A company with email '{$email}' already exists.");
+            return $response->redirect('/coordinator/companies');
+        }
+
+        $db->getConnection()->exec("BEGIN TRANSACTION;");
+        try {
+            $stmt = $db->getConnection()->prepare("INSERT INTO companies (name, email, phone, address, latitude, longitude, industry_category, available_slots, contact_person, status, rating, specializations) VALUES (:name, :email, :phone, :address, 7.3912, 3.8424, :cat, :slots, :cp, 'verified', 5, :spec)");
+            $stmt->bindValue(':name', $name);
+            $stmt->bindValue(':email', $email);
+            $stmt->bindValue(':phone', $phone);
+            $stmt->bindValue(':address', $address);
+            $stmt->bindValue(':cat', $category);
+            $stmt->bindValue(':slots', $slots);
+            $stmt->bindValue(':cp', $contactPerson);
+            $stmt->bindValue(':spec', $specializations);
+            $stmt->execute();
+
+            $db->getConnection()->exec("COMMIT;");
+            Session::setFlash('success', "Company '{$name}' created and verified successfully!");
+        } catch (\Exception $e) {
+            $db->getConnection()->exec("ROLLBACK;");
+            Session::setFlash('error', 'Failed to add company: ' . $e->getMessage());
+        }
+
+        return $response->redirect('/coordinator/companies');
+    }
 }

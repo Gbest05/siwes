@@ -12,19 +12,38 @@ class Seeder {
 
         // 1. Seed Departments
         $departments = [
-            ['name' => 'Computer Science', 'code' => 'CSC'],
-            ['name' => 'Electrical & Electronic Engineering', 'code' => 'EEE'],
-            ['name' => 'Mechanical Engineering', 'code' => 'MEE'],
-            ['name' => 'Biochemistry', 'code' => 'BCH']
+            ['name' => 'Computer Science', 'code' => 'CSC', 'status' => 'active', 'show_on_signup' => 1]
         ];
 
         foreach ($departments as $dept) {
-            $stmt = $this->db->prepare("INSERT OR IGNORE INTO departments (name, code) VALUES (:name, :code)");
+            $stmt = $this->db->prepare("INSERT OR IGNORE INTO departments (name, code, status, show_on_signup) VALUES (:name, :code, :status, :show_on_signup)");
             $stmt->bindValue(':name', $dept['name']);
             $stmt->bindValue(':code', $dept['code']);
+            $stmt->bindValue(':status', $dept['status'] ?? 'active');
+            $stmt->bindValue(':show_on_signup', $dept['show_on_signup'] ?? 1);
             $stmt->execute();
         }
         echo "Departments seeded.\n";
+
+        // 1b. Seed Academic Levels
+        $levels = [
+            ['name' => '100 Level', 'code' => '100', 'year_value' => 1, 'status' => 'active', 'show_on_signup' => 0],
+            ['name' => '200 Level', 'code' => '200', 'year_value' => 2, 'status' => 'active', 'show_on_signup' => 0],
+            ['name' => '300 Level', 'code' => '300', 'year_value' => 3, 'status' => 'active', 'show_on_signup' => 1],
+            ['name' => '400 Level', 'code' => '400', 'year_value' => 4, 'status' => 'active', 'show_on_signup' => 1],
+            ['name' => '500 Level', 'code' => '500', 'year_value' => 5, 'status' => 'active', 'show_on_signup' => 1],
+        ];
+
+        foreach ($levels as $lvl) {
+            $stmt = $this->db->prepare("INSERT OR IGNORE INTO academic_levels (name, code, year_value, status, show_on_signup) VALUES (:name, :code, :year_value, :status, :show_on_signup)");
+            $stmt->bindValue(':name', $lvl['name']);
+            $stmt->bindValue(':code', $lvl['code']);
+            $stmt->bindValue(':year_value', $lvl['year_value']);
+            $stmt->bindValue(':status', $lvl['status']);
+            $stmt->bindValue(':show_on_signup', $lvl['show_on_signup']);
+            $stmt->execute();
+        }
+        echo "Academic levels seeded.\n";
 
         // Get department IDs for references
         $deptIds = [];
@@ -237,11 +256,11 @@ class Seeder {
             ],
             [
                 'username' => 'student2',
-                'matric_no' => 'EEE/2021/012',
+                'matric_no' => 'CSC/2021/012',
                 'first_name' => 'Chidi',
                 'last_name' => 'Okafor',
-                'department_code' => 'EEE',
-                'course' => 'Electrical & Electronic Engineering',
+                'department_code' => 'CSC',
+                'course' => 'Computer Science',
                 'year' => 4,
                 'phone' => '+2348023456789',
                 'status' => 'allocated',
@@ -251,11 +270,11 @@ class Seeder {
             ],
             [
                 'username' => 'student3',
-                'matric_no' => 'BCH/2021/089',
+                'matric_no' => 'CSC/2021/089',
                 'first_name' => 'Fatima',
                 'last_name' => 'Bello',
-                'department_code' => 'BCH',
-                'course' => 'Biochemistry',
+                'department_code' => 'CSC',
+                'course' => 'Computer Science',
                 'year' => 4,
                 'phone' => '+2349054321098',
                 'status' => 'allocated',
@@ -279,11 +298,11 @@ class Seeder {
             ],
             [
                 'username' => 'student5',
-                'matric_no' => 'MEE/2021/056',
+                'matric_no' => 'CSC/2021/056',
                 'first_name' => 'Bola',
                 'last_name' => 'Tinubu',
-                'department_code' => 'MEE',
-                'course' => 'Mechanical Engineering',
+                'department_code' => 'CSC',
+                'course' => 'Computer Science',
                 'year' => 4,
                 'phone' => '+2347033445566',
                 'status' => 'unallocated',

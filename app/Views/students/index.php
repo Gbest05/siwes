@@ -1,5 +1,6 @@
 <div class="space-y-8 animate-fade-in-up" x-data="{ 
     showImportModal: false, 
+    showAddStudentModal: false,
     showEditModal: false, 
     editForm: { 
         id: '', 
@@ -14,14 +15,17 @@
     } 
 }">
     <!-- Header -->
-    <div class="flex justify-between items-center">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
             <h1 class="text-3xl font-poppins font-bold text-slate-800 dark:text-white">SIWES Student Management</h1>
-            <p class="text-sm text-slate-500 dark:text-gray-400">View student attachment profiles, load new batches, and coordinate status audits.</p>
+            <p class="text-sm text-slate-500 dark:text-gray-400">View student attachment profiles, add individual students, load CSV batches, and coordinate status audits.</p>
         </div>
-        <div class="flex space-x-2 no-print">
-            <button @click="showImportModal = true" class="bg-primary hover:bg-secondary text-white text-sm px-4 py-2.5 rounded-xl font-semibold shadow-md shadow-primary/20 transition flex items-center space-x-2">
-                <i class="fa-solid fa-file-import"></i> <span>Bulk CSV Import</span>
+        <div class="flex flex-wrap items-center gap-2 no-print">
+            <button @click="showAddStudentModal = true" class="bg-primary hover:bg-secondary text-white text-sm px-4 py-2.5 rounded-xl font-semibold shadow-md shadow-primary/20 transition flex items-center space-x-2">
+                <i class="fa-solid fa-user-plus"></i> <span>Add Student</span>
+            </button>
+            <button @click="showImportModal = true" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-white text-sm px-4 py-2.5 rounded-xl font-semibold transition flex items-center space-x-2">
+                <i class="fa-solid fa-file-import"></i> <span>Bulk CSV</span>
             </button>
             <button onclick="exportTableToCSV('students-table', 'siwes_students_list.csv')" class="bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-white border border-slate-200 dark:border-slate-700 text-sm px-4 py-2.5 rounded-xl font-semibold transition flex items-center space-x-2">
                 <i class="fa-solid fa-file-export text-accent"></i> <span>Export CSV</span>
@@ -269,6 +273,83 @@
                 </div>
 
                 <button type="submit" class="w-full bg-primary hover:bg-secondary text-white py-3 rounded-xl font-semibold shadow-md shadow-primary/25 transition">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Add Single Student -->
+    <div x-show="showAddStudentModal" class="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" x-transition x-cloak>
+        <div class="bg-white dark:bg-darkCard w-full max-w-lg rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-xl space-y-6" @click.away="showAddStudentModal = false">
+            <div class="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800">
+                <h3 class="font-poppins font-bold text-slate-850 dark:text-white text-base">Add New Student</h3>
+                <button @click="showAddStudentModal = false" class="text-slate-400 hover:text-slate-650 dark:hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <form action="/siwes/coordinator/student/add" method="POST" class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">First Name</label>
+                        <input type="text" name="first_name" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none dark:text-white" placeholder="Samuel">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Last Name</label>
+                        <input type="text" name="last_name" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none dark:text-white" placeholder="Alao">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Matric Number</label>
+                        <input type="text" name="matric_no" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none dark:text-white" placeholder="CSC/2021/045">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Academic Level</label>
+                        <select name="level" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none dark:text-white">
+                            <?php if (empty($levels)): ?>
+                                <option value="400 Level" selected>400 Level</option>
+                            <?php else: ?>
+                                <?php foreach ($levels as $lvl): ?>
+                                    <option value="<?= htmlspecialchars($lvl['name']) ?>" <?= strpos($lvl['code'], '400') !== false ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($lvl['name']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Username</label>
+                        <input type="text" name="username" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none dark:text-white" placeholder="samuel123">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Email Address</label>
+                        <input type="email" name="email" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none dark:text-white" placeholder="samuel@student.edu.ng">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Phone Number</label>
+                        <input type="text" name="phone" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none dark:text-white" placeholder="+234...">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Account Password</label>
+                        <input type="password" name="password" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none dark:text-white" placeholder="student123">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Department</label>
+                    <select name="department_id" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none dark:text-white">
+                        <?php foreach ($departments as $dept): ?>
+                            <option value="<?= $dept['id'] ?>"><?= htmlspecialchars($dept['name']) ?> (<?= htmlspecialchars($dept['code']) ?>)</option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <button type="submit" class="w-full bg-primary hover:bg-secondary text-white py-3 rounded-xl font-semibold shadow-md shadow-primary/25 transition">Create Student Account</button>
             </form>
         </div>
     </div>

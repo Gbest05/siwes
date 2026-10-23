@@ -56,6 +56,14 @@ class Database {
         return $this->db;
     }
 
+    public function prepare($sql) {
+        return $this->db->prepare($sql);
+    }
+
+    public function exec($sql) {
+        return $this->db->exec($sql);
+    }
+
     // Helper methods to simplify queries
     public function query($sql, $params = []) {
         $stmt = $this->db->prepare($sql);

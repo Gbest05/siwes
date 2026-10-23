@@ -51,9 +51,13 @@ class UserController {
         $sql .= " ORDER BY created_at DESC LIMIT $limit OFFSET $offset";
         $users = $db->fetchAll($sql, $params);
 
+        // Fetch companies for add supervisor modal
+        $companies = $db->fetchAll("SELECT id, name FROM companies ORDER BY name ASC");
+
         $response = new Response();
         return $response->render('users/index', [
             'users' => $users,
+            'companies' => $companies,
             'filters' => [
                 'search' => $search,
                 'role' => $roleFilter,
@@ -145,6 +149,87 @@ class UserController {
         } catch (\Exception $e) {
             $db->getConnection()->exec("ROLLBACK;");
             Session::setFlash('error', 'Deletion failed: ' . $e->getMessage());
+        }
+
+        return $response->redirect('/coordinator/users');
+    }
+
+    public function addSupervisor() {
+        Auth::requireRole(['admin', 'coordinator']);
+        $request = new Request();
+        $response = new Response();
+        $db = Database::getInstance();
+
+        if (!$request->isPost()) {
+            return $response->redirect('/coordinator/users');
+        }
+
+        $username = strtolower(trim($request->post('username', '')));
+        $email = strtolower(trim($request->post('email', '')));
+        $password = $request->post('password', '');
+        $firstName = trim($request->post('first_name', ''));
+        $lastName = trim($request->post('last_name', ''));
+        $phone = trim($request->post('phone', ''));
+        $type = $request->post('type', 'company');
+        $deptId = 1; // Enforce single department: Computer Science
+        $companyId = null;
+
+        if ($type === 'company') {
+            $companyId = !empty($request->post('company_id')) ? (int)$request->post('company_id') : null;
+            if (empty($companyId)) {
+                Session::setFlash('error', 'Please select a company for this company supervisor.');
+                return $response->redirect('/coordinator/users');
+            }
+        } else {
+            $type = 'institution'; // Departmental Supervisor
+        }
+
+        if (empty($username) || empty($email) || empty($password) || empty($firstName) || empty($lastName)) {
+            Session::setFlash('error', 'Username, email, password, first name and last name are required.');
+            return $response->redirect('/coordinator/users');
+        }
+
+        // Check if username or email already exists
+        $exists = $db->fetchRow("SELECT id FROM users WHERE username = :u OR email = :e LIMIT 1", [
+            ':u' => $username,
+            ':e' => $email
+        ]);
+
+        if ($exists) {
+            Session::setFlash('error', 'A user with this username or email already exists.');
+            return $response->redirect('/coordinator/users');
+        }
+
+        $db->getConnection()->exec("BEGIN TRANSACTION;");
+        try {
+            $passwordHash = password_hash($password, PASSWORD_BCRYPT);
+
+            // 1. Insert into users table
+            $stmt = $db->getConnection()->prepare("INSERT INTO users (username, email, password_hash, role, status) VALUES (:u, :e, :p, 'supervisor', 'active')");
+            $stmt->bindValue(':u', $username);
+            $stmt->bindValue(':e', $email);
+            $stmt->bindValue(':p', $passwordHash);
+            $stmt->execute();
+
+            $userId = $db->lastInsertRowID();
+
+            // 2. Insert into supervisors table
+            $stmtSup = $db->getConnection()->prepare("INSERT INTO supervisors (user_id, company_id, department_id, first_name, last_name, phone, type) VALUES (:uid, :cid, :dept, :fn, :ln, :ph, :tp)");
+            $stmtSup->bindValue(':uid', $userId);
+            $stmtSup->bindValue(':cid', $companyId);
+            $stmtSup->bindValue(':dept', $deptId);
+            $stmtSup->bindValue(':fn', $firstName);
+            $stmtSup->bindValue(':ln', $lastName);
+            $stmtSup->bindValue(':ph', $phone);
+            $stmtSup->bindValue(':tp', $type);
+            $stmtSup->execute();
+
+            $db->getConnection()->exec("COMMIT;");
+            $label = ($type === 'institution') ? 'Departmental Supervisor' : 'Company Supervisor';
+            Session::setFlash('success', "{$label} {$firstName} {$lastName} created successfully!");
+        } catch (\Exception $e) {
+            $db->getConnection()->exec("ROLLBACK;");
+            Session::setFlash('error', 'Failed to create supervisor: ' . $e->getMessage());
         }
 
         return $response->redirect('/coordinator/users');

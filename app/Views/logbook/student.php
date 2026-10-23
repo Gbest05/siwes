@@ -5,13 +5,95 @@
             <h1 class="text-3xl font-poppins font-bold text-slate-800 dark:text-white">SIWES Logbook Log</h1>
             <p class="text-sm text-slate-500 dark:text-gray-400">Record daily tasks, upload drawings, and review supervisor feedback.</p>
         </div>
+        <?php if (!empty($isLocked)): ?>
+            <span class="inline-flex items-center px-3.5 py-1.5 rounded-xl text-xs font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400">
+                <i class="fa-solid fa-lock mr-2"></i> Logbook Locked
+            </span>
+        <?php else: ?>
+            <span class="inline-flex items-center px-3.5 py-1.5 rounded-xl text-xs font-bold bg-success/15 text-success">
+                <i class="fa-solid fa-lock-open mr-2"></i> Logbook Unlocked & Active
+            </span>
+        <?php endif; ?>
     </div>
 
-    <!-- Mode tabs toggles -->
-    <div class="flex space-x-2 border-b border-slate-200 dark:border-slate-800 pb-px">
-        <button @click="logTab = 'daily'" :class="logTab === 'daily' ? 'border-primary text-primary font-bold' : 'border-transparent text-slate-400 hover:text-slate-600'" class="border-b-2 px-4 py-2.5 text-sm transition-all focus:outline-none">Daily Logs</button>
-        <button @click="logTab = 'weekly'" :class="logTab === 'weekly' ? 'border-primary text-primary font-bold' : 'border-transparent text-slate-400 hover:text-slate-600'" class="border-b-2 px-4 py-2.5 text-sm transition-all focus:outline-none">Weekly Summaries</button>
-    </div>
+    <?php if (!empty($isLocked)): ?>
+        <!-- ================= LOCKED LOGBOOK VIEW ================= -->
+        <div class="bg-white dark:bg-darkCard rounded-3xl border border-slate-100 dark:border-slate-800 shadow-soft p-8 md:p-12 max-w-3xl mx-auto text-center space-y-6">
+            <div class="w-20 h-20 bg-amber-500/10 text-amber-500 rounded-3xl flex items-center justify-center text-3xl mx-auto shadow-inner">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+
+            <div class="space-y-2">
+                <h2 class="text-2xl font-poppins font-bold text-slate-800 dark:text-white">
+                    Daily Logbook is Currently Locked
+                </h2>
+                <p class="text-sm text-slate-500 dark:text-gray-400 max-w-xl mx-auto leading-relaxed">
+                    Under academic SIWES regulations, students cannot view or log daily activities until their uploaded registration credentials (Acceptance Letter, Passport Photo, and CV) have been officially reviewed and approved by their <span class="font-bold text-slate-800 dark:text-white">Departmental Supervisor</span>.
+                </p>
+            </div>
+
+            <!-- Verification Progress & Supervisor Info Card -->
+            <div class="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 text-left space-y-4 max-w-xl mx-auto">
+                <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-3">
+                    <span class="text-xs uppercase font-bold text-slate-400 tracking-wider">SIWES Verification Status</span>
+                    <?php if (($student['document_status'] ?? '') === 'queried'): ?>
+                        <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-danger/15 text-danger flex items-center gap-1.5">
+                            <i class="fa-solid fa-triangle-exclamation"></i> Queried / Defect Found
+                        </span>
+                    <?php else: ?>
+                        <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-600 flex items-center gap-1.5">
+                            <i class="fa-solid fa-clock"></i> Pending Departmental Review
+                        </span>
+                    <?php endif; ?>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    <div>
+                        <span class="text-slate-400 block font-semibold">Assigned Departmental Supervisor</span>
+                        <p class="font-bold text-slate-800 dark:text-white text-sm mt-0.5">
+                            <?= htmlspecialchars($student['dept_supervisor_name'] ?? 'Dr. Charles Koffi (Assigned)') ?>
+                        </p>
+                        <p class="text-slate-500 text-[11px]"><?= htmlspecialchars($student['dept_supervisor_email'] ?? 'koffi@university.edu.ng') ?></p>
+                    </div>
+
+                    <div>
+                        <span class="text-slate-400 block font-semibold">Department</span>
+                        <p class="font-bold text-primary dark:text-accent text-sm mt-0.5">
+                            Computer Science (CSC)
+                        </p>
+                        <p class="text-slate-500 text-[11px]">Single Department Policy</p>
+                    </div>
+                </div>
+
+                <?php if (!empty($student['supervisor_feedback'])): ?>
+                    <div class="bg-amber-500/10 p-3 rounded-xl border border-amber-500/20 text-xs space-y-1">
+                        <span class="font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+                            <i class="fa-solid fa-circle-exclamation"></i> Supervisor Feedback / Query Instructions:
+                        </span>
+                        <p class="text-slate-700 dark:text-slate-300"><?= htmlspecialchars($student['supervisor_feedback']) ?></p>
+                    </div>
+                <?php endif; ?>
+            </div>
+
+            <!-- Resolution CTA -->
+            <div class="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
+                <a href="/siwes/student/dashboard" class="w-full sm:w-auto bg-primary hover:bg-secondary text-white px-6 py-3 rounded-xl font-bold text-sm shadow-md shadow-primary/25 transition flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <span>Go to SIWES Document Center</span>
+                </a>
+                <a href="/siwes/settings" class="w-full sm:w-auto bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-gray-300 px-5 py-3 rounded-xl font-semibold text-sm transition text-center">
+                    Check Notifications
+                </a>
+            </div>
+        </div>
+
+    <?php else: ?>
+        <!-- ================= UNLOCKED ACTIVE LOGBOOK VIEW ================= -->
+        <!-- Mode tabs toggles -->
+        <div class="flex space-x-2 border-b border-slate-200 dark:border-slate-800 pb-px">
+            <button @click="logTab = 'daily'" :class="logTab === 'daily' ? 'border-primary text-primary font-bold' : 'border-transparent text-slate-400 hover:text-slate-600'" class="border-b-2 px-4 py-2.5 text-sm transition-all focus:outline-none">Daily Logs</button>
+            <button @click="logTab = 'weekly'" :class="logTab === 'weekly' ? 'border-primary text-primary font-bold' : 'border-transparent text-slate-400 hover:text-slate-600'" class="border-b-2 px-4 py-2.5 text-sm transition-all focus:outline-none">Weekly Summaries</button>
+        </div>
 
     <!-- Daily Log Tab Contents -->
     <div x-show="logTab === 'daily'" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -170,4 +252,5 @@
             <?php endif; ?>
         </div>
     </div>
+    <?php endif; ?>
 </div>

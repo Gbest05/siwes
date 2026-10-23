@@ -82,8 +82,20 @@ class DashboardController {
         $user = Auth::user();
         $studentId = $user['profile']['id'];
 
-        // Get student's allocation details
-        $allocation = $db->fetchRow("SELECT a.*, c.name as company_name, c.email as company_email, c.phone as company_phone, c.address as company_address, s.first_name || ' ' || s.last_name as supervisor_name, s.phone as supervisor_phone FROM allocations a JOIN companies c ON a.company_id = c.id LEFT JOIN supervisors s ON a.supervisor_id = s.id WHERE a.student_id = :sid LIMIT 1", [
+        // Get fresh student profile with documents and feedback
+        $studentProfile = $db->fetchRow("SELECT * FROM students WHERE id = :sid LIMIT 1", [':sid' => $studentId]);
+
+        // Get student's allocation details with both Company Supervisor and Departmental Supervisor
+        $allocation = $db->fetchRow("SELECT a.*, c.name as company_name, c.email as company_email, c.phone as company_phone, c.address as company_address, 
+            s.first_name || ' ' || s.last_name as supervisor_name, s.phone as supervisor_phone, sup_user.email as supervisor_email, s.type as supervisor_type,
+            dsup.first_name || ' ' || dsup.last_name as dept_supervisor_name, dsup.phone as dept_supervisor_phone, dsup_user.email as dept_supervisor_email
+            FROM allocations a 
+            LEFT JOIN companies c ON a.company_id = c.id 
+            LEFT JOIN supervisors s ON a.supervisor_id = s.id 
+            LEFT JOIN users sup_user ON s.user_id = sup_user.id 
+            LEFT JOIN supervisors dsup ON a.institution_supervisor_id = dsup.id 
+            LEFT JOIN users dsup_user ON dsup.user_id = dsup_user.id 
+            WHERE a.student_id = :sid LIMIT 1", [
             ':sid' => $studentId
         ]);
 
@@ -100,10 +112,15 @@ class DashboardController {
         // Evaluation status
         $evaluation = $db->fetchRow("SELECT * FROM evaluations WHERE student_id = :sid LIMIT 1", [':sid' => $studentId]);
 
+        // Complaints / queries filed for this student
+        $complaints = $db->fetchAll("SELECT * FROM complaints WHERE student_id = :sid ORDER BY created_at DESC", [':sid' => $studentId]);
+
         $response = new Response();
         return $response->render('dashboards/student', [
             'user' => $user,
+            'studentProfile' => $studentProfile,
             'allocation' => $allocation,
+            'complaints' => $complaints,
             'progress' => [
                 'total' => $totalLogsCount,
                 'approved' => $approvedLogsCount,
@@ -120,22 +137,90 @@ class DashboardController {
         $db = Database::getInstance();
         $user = Auth::user();
         $supervisorId = $user['profile']['id'];
-        $companyId = $user['profile']['company_id'];
+        $supervisorType = $user['profile']['type'] ?? 'company';
+        $companyId = $user['profile']['company_id'] ?? null;
 
-        // Get assigned students
-        $assignedStudents = $db->fetchAll("SELECT s.*, a.status as allocation_status, a.id as allocation_id, d.code as dept_code FROM allocations a JOIN students s ON a.student_id = s.id JOIN departments d ON s.department_id = d.id WHERE a.supervisor_id = :svid AND a.company_id = :cid", [
+        // If this is a Departmental Supervisor (institution), render Departmental Supervisor Dashboard
+        if ($supervisorType === 'institution') {
+            $students = $db->fetchAll("SELECT s.*, a.status as allocation_status, a.id as allocation_id, a.company_id as allocated_company_id, a.supervisor_id as company_supervisor_id, d.code as dept_code, d.name as department_name, c.name as company_name, sup.first_name || ' ' || sup.last_name as company_supervisor_name, sup.phone as company_supervisor_phone 
+                FROM allocations a 
+                JOIN students s ON a.student_id = s.id 
+                JOIN departments d ON s.department_id = d.id 
+                LEFT JOIN companies c ON a.company_id = c.id 
+                LEFT JOIN supervisors sup ON a.supervisor_id = sup.id 
+                WHERE a.institution_supervisor_id = :svid ORDER BY s.matric_no ASC", [
+                ':svid' => $supervisorId
+            ]);
+
+            // Calculate departmental metrics
+            $pendingReviewCount = 0;
+            $approvedCount = 0;
+            $queriedCount = 0;
+            foreach ($students as $s) {
+                $status = $s['document_status'] ?? 'pending';
+                if ($status === 'approved') $approvedCount++;
+                elseif ($status === 'queried') $queriedCount++;
+                else $pendingReviewCount++;
+            }
+
+            // Departmental complaints assigned
+            $complaints = $db->fetchAll("SELECT c.*, s.first_name || ' ' || s.last_name as student_name, s.matric_no, s.phone as student_phone 
+                FROM complaints c 
+                JOIN students s ON c.student_id = s.id 
+                WHERE c.created_by_user_id = :uid 
+                ORDER BY c.created_at DESC", [
+                ':uid' => $user['id']
+            ]);
+
+            $companies = $db->fetchAll("SELECT id, name FROM companies WHERE status = 'verified' ORDER BY name ASC");
+
+            $response = new Response();
+            return $response->render('dashboards/dept_supervisor', [
+                'supervisor' => $user['profile'],
+                'students' => $students,
+                'complaints' => $complaints,
+                'companies' => $companies,
+                'metrics' => [
+                    'pending_review' => $pendingReviewCount,
+                    'approved' => $approvedCount,
+                    'queried' => $queriedCount
+                ]
+            ]);
+        }
+
+        // Standard Company Supervisor Dashboard: Match by supervisor ID OR company ID
+        $assignedStudents = $db->fetchAll("SELECT s.*, a.status as allocation_status, a.id as allocation_id, a.company_id as allocated_company_id, d.code as dept_code, c.name as company_name 
+            FROM allocations a 
+            JOIN students s ON a.student_id = s.id 
+            JOIN departments d ON s.department_id = d.id 
+            LEFT JOIN companies c ON a.company_id = c.id 
+            WHERE a.supervisor_id = :svid OR (:cid IS NOT NULL AND a.company_id = :cid)", [
             ':svid' => $supervisorId,
             ':cid' => $companyId
         ]);
 
+        // Fetch verified companies for allocation dropdown
+        $companies = $db->fetchAll("SELECT id, name FROM companies WHERE status = 'verified' ORDER BY name ASC");
+
+        // Fetch company profile if supervisor has one
+        $company = !empty($companyId) ? $db->fetchRow("SELECT * FROM companies WHERE id = :cid LIMIT 1", [':cid' => $companyId]) : null;
+
         // Get pending logbooks that require verification
-        $pendingLogs = $db->fetchAll("SELECT l.*, s.first_name || ' ' || s.last_name as student_name, s.matric_no FROM logbooks l JOIN students s ON l.student_id = s.id JOIN allocations a ON a.student_id = s.id WHERE a.supervisor_id = :svid AND l.supervisor_status = 'pending'", [
-            ':svid' => $supervisorId
+        $pendingLogs = $db->fetchAll("SELECT l.*, s.first_name || ' ' || s.last_name as student_name, s.matric_no 
+            FROM logbooks l 
+            JOIN students s ON l.student_id = s.id 
+            JOIN allocations a ON a.student_id = s.id 
+            WHERE (a.supervisor_id = :svid OR (:cid IS NOT NULL AND a.company_id = :cid)) AND l.supervisor_status = 'pending'", [
+            ':svid' => $supervisorId,
+            ':cid' => $companyId
         ]);
 
         $response = new Response();
         return $response->render('dashboards/supervisor', [
+            'supervisor' => $user['profile'],
+            'company' => $company,
             'students' => $assignedStudents,
+            'companies' => $companies,
             'pendingLogs' => $pendingLogs
         ]);
     }

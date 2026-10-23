@@ -1,10 +1,13 @@
-<div class="space-y-8 animate-fade-in-up">
+<div class="space-y-8 animate-fade-in-up" x-data="{ showAddSupervisorModal: false }">
     <!-- Header -->
-    <div class="flex justify-between items-center">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
             <h1 class="text-3xl font-poppins font-bold text-slate-800 dark:text-white">SIWES User Management</h1>
-            <p class="text-sm text-slate-500 dark:text-gray-400">Monitor all accounts in the portal, toggle account status (suspend/activate), or permanently delete users.</p>
+            <p class="text-sm text-slate-500 dark:text-gray-400">Create new supervisors, monitor all accounts, toggle account status, or remove users.</p>
         </div>
+        <button @click="showAddSupervisorModal = true" class="bg-primary hover:bg-secondary text-white text-xs px-5 py-2.5 rounded-xl font-bold transition flex items-center space-x-2 shadow-md shadow-primary/20">
+            <i class="fa-solid fa-user-plus text-xs"></i> <span>Add New Supervisor</span>
+        </button>
     </div>
 
     <!-- Filters Panel -->
@@ -129,5 +132,86 @@
                 </div>
             </div>
         <?php endif; ?>
+    </div>
+
+    <!-- Modal: Add New Supervisor -->
+    <div x-show="showAddSupervisorModal" class="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" x-transition x-cloak>
+        <div class="bg-white dark:bg-darkCard w-full max-w-lg rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-xl space-y-6" @click.away="showAddSupervisorModal = false">
+            <div class="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800">
+                <h3 class="font-poppins font-bold text-slate-850 dark:text-white text-base">Create New Supervisor</h3>
+                <button @click="showAddSupervisorModal = false" class="text-slate-400 hover:text-slate-650 dark:hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <form action="/siwes/coordinator/supervisor/add" method="POST" class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">First Name</label>
+                        <input type="text" name="first_name" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none dark:text-white" placeholder="Dr. Charles">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Last Name</label>
+                        <input type="text" name="last_name" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none dark:text-white" placeholder="Koffi">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Username</label>
+                        <input type="text" name="username" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none dark:text-white" placeholder="charles_k">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Email Address</label>
+                        <input type="email" name="email" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none dark:text-white" placeholder="charles@company.com">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Phone Number</label>
+                        <input type="text" name="phone" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none dark:text-white" placeholder="+234...">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Password</label>
+                        <input type="password" name="password" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none dark:text-white" placeholder="super123">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" x-data="{ supType: 'company' }">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Supervisor Type</label>
+                        <select name="type" x-model="supType" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none dark:text-white">
+                            <option value="company">Company / Industry Supervisor</option>
+                            <option value="institution">Departmental Supervisor (Computer Science)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <template x-if="supType === 'company'">
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Assigned Company</label>
+                                <select name="company_id" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:outline-none dark:text-white">
+                                    <option value="">-- Choose Company --</option>
+                                    <?php if (!empty($companies)): ?>
+                                        <?php foreach ($companies as $comp): ?>
+                                            <option value="<?= $comp['id'] ?>"><?= htmlspecialchars($comp['name']) ?></option>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+                                </select>
+                            </div>
+                        </template>
+                        <template x-if="supType === 'institution'">
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Assigned Department</label>
+                                <div class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 px-4 py-2.5 rounded-xl text-xs font-bold text-primary dark:text-accent flex items-center justify-between">
+                                    <span>Computer Science (CSC)</span>
+                                    <span class="text-[10px] bg-primary text-white dark:bg-accent dark:text-black px-2 py-0.5 rounded-full">Single Dept Policy</span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-primary hover:bg-secondary text-white py-3 rounded-xl font-semibold shadow-md shadow-primary/25 transition">Create Supervisor Account</button>
+            </form>
+        </div>
     </div>
 </div>
