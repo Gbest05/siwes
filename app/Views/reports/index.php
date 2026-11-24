@@ -143,7 +143,7 @@
                                 <td class="py-2 font-semibold"><?= htmlspecialchars($row['dept_code']) ?></td>
                                 <td class="py-2 text-center font-bold text-success"><?= $row['present_days'] ?></td>
                                 <td class="py-2 text-center font-bold text-danger"><?= $row['absent_days'] ?></td>
-                                <td class="py-2 text-center font-bold"><?= round(($row['present_days'] / 120) * 100, 1) ?>%</td>
+                                <td class="py-2 text-center font-bold"><?= round(($row['present_days'] / 96) * 100, 1) ?>%</td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>

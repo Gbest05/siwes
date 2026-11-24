@@ -124,7 +124,8 @@ class DashboardController {
             'progress' => [
                 'total' => $totalLogsCount,
                 'approved' => $approvedLogsCount,
-                'percentage' => $totalLogsCount > 0 ? round(($approvedLogsCount / 120) * 100) : 0 // 120 days is typical 6 months SIWES
+                'target' => 96,
+                'percentage' => $totalLogsCount > 0 ? round(($approvedLogsCount / 96) * 100) : 0 // 96 days target
             ],
             'weeklyReports' => $weeklyReports,
             'notifications' => $notifications,

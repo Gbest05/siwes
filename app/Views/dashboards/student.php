@@ -394,13 +394,13 @@
         <div class="bg-white dark:bg-darkCard rounded-3xl p-6 border border-slate-100 dark:border-slate-800 shadow-soft flex flex-col justify-between">
             <div>
                 <h3 class="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Daily Progress Tracker</h3>
-                <span class="text-xs text-slate-500">Target: 120 completed workdays.</span>
+                <span class="text-xs text-slate-500">Target: 96 completed workdays.</span>
             </div>
             
             <div class="my-4">
                 <div class="flex justify-between items-center text-sm font-bold text-slate-700 dark:text-gray-200 mb-1">
                     <span>Approved Logs</span>
-                    <span><?= $progress['approved'] ?> / 120 (<?= $progress['percentage'] ?>%)</span>
+                    <span><?= $progress['approved'] ?> / 96 (<?= $progress['percentage'] ?>%)</span>
                 </div>
                 <div class="w-full bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
                     <div class="bg-gradient-to-r from-primary to-accent h-full rounded-full transition-all duration-300" style="width: <?= min(100, $progress['percentage']) ?>%"></div>
